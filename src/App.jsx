@@ -540,12 +540,15 @@ function MindMapViz() {
     return false;
   };
 
-  const transform = `translate(${pan.x},${pan.y}) scale(${zoom}) translate(${(W / 2) * (1 - 1 / zoom)},${(H / 2) * (1 - 1 / zoom)})`;
+  // Centre the map on screen at current zoom level
+  const screenW = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const screenH = typeof window !== "undefined" ? window.innerHeight : 800;
+  const transform = `translate(${screenW / 2 + pan.x}, ${screenH / 2 + pan.y}) scale(${zoom}) translate(${-W / 2}, ${-H / 2})`;
 
   return (
     <div
       style={{
-        width: "100vw", height: "100vh", background: "#111827",
+        width: "100%", height: "100dvh", background: "#111827",
         fontFamily: "Georgia, 'Times New Roman', serif",
         overflow: "hidden", position: "relative",
         cursor: dragging ? "grabbing" : "default", userSelect: "none",
@@ -576,7 +579,7 @@ function MindMapViz() {
       </div>
 
       {/* SVG */}
-      <svg ref={svgRef} width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
+      <svg ref={svgRef} width="100%" height="100%" style={{ display: "block", position: "absolute", top: 0, left: 0 }}>
         <defs>
           <radialGradient id="bg" cx="50%" cy="50%" r="55%">
             <stop offset="0%" stopColor="#1e2640" />
@@ -611,13 +614,8 @@ function MindMapViz() {
           </marker>
         </defs>
 
-        <rect width={W} height={H} fill="url(#bg)" />
-        {/* Dot grid */}
-        {Array.from({ length: 32 }).map((_, r) =>
-          Array.from({ length: 46 }).map((_, col) => (
-            <circle key={`${r}-${col}`} cx={col * 40 + 20} cy={r * 40 + 20} r={0.6} fill="rgba(255,255,255,0.07)" />
-          ))
-        )}
+        <rect width="100%" height="100%" fill="url(#bg)" />
+        <rect width="100%" height="100%" fill="#111827" opacity="0" />
 
         <g transform={transform}>
           {/* ── Cross-connections ── */}
@@ -935,8 +933,8 @@ function MindMapViz() {
       {/* ── DETAIL PANEL ── */}
       {(selPaper || selCluster || selGap || selOQ || selQuestion) && (
         <div style={{
-          position: "absolute", bottom: 18, left: "50%", transform: "translateX(-50%)",
-          width: "min(780px, 94vw)",
+          position: "absolute", bottom: "max(12px, env(safe-area-inset-bottom, 12px))", left: "50%", transform: "translateX(-50%)",
+          width: "min(780px, 94vw)", maxHeight: "60vh", overflowY: "auto",
           background: "rgba(18,22,42,0.97)", backdropFilter: "blur(14px)",
           border: `1px solid ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}44`,
           borderRadius: 14, padding: "18px 22px 16px",
@@ -959,7 +957,7 @@ function MindMapViz() {
                   The Research Gap
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
                 <div>
                   <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "#FF6B6B", opacity: 0.6, marginBottom: 6 }}>
                     What is missing
@@ -1002,7 +1000,7 @@ function MindMapViz() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginTop: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, marginTop: 8 }}>
                 {OPEN_QUESTIONS.questions.map((q) => (
                   <div key={q.id} onClick={() => setSelected(q.id)}
                     style={{
@@ -1024,7 +1022,7 @@ function MindMapViz() {
 
           {/* ── Individual question panel ── */}
           {selQuestion && (
-            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 18, alignItems: "start" }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
               <div style={{ fontSize: 40, color: OQ_COLOR, opacity: 0.5, lineHeight: 1 }}>?</div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: OQ_COLOR, marginBottom: 10, lineHeight: 1.3 }}>
@@ -1056,7 +1054,7 @@ function MindMapViz() {
                 return { other: allPapers.find((p) => p.id === oid), label: cn.label };
               });
             return (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
                 {/* LEFT: concept + detail */}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -1359,7 +1357,7 @@ const BarChart = ({ data, color, title }) => {
       {title && <div style={{ fontSize:11, fontWeight:700, color:C.muted, marginBottom:10 }}>{title}</div>}
       {data.map((d,i) => (
         <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:7 }}>
-          <div style={{ fontSize:10, color:C.dim, width:130, flexShrink:0, textAlign:"right", lineHeight:1.3 }}>{d.label}</div>
+          <div style={{ fontSize:10, color:C.dim, width:"clamp(70px, 28%, 130px)", flexShrink:0, textAlign:"right", lineHeight:1.3 }}>{d.label}</div>
           <div style={{ flex:1, background:C.bg3, borderRadius:3, height:22, overflow:"hidden" }}>
             <div style={{ width:`${Math.round((d.value/max)*100)}%`, height:"100%", background:color, borderRadius:3, minWidth:d.value>0?28:0, transition:"width .5s", display:"flex", alignItems:"center", paddingLeft:8 }}>
               {d.value>0 && <span style={{ fontSize:10, color:C.white, fontWeight:700 }}>{d.value}</span>}
@@ -1590,7 +1588,7 @@ const Landing = ({ onNav }) => {
 
 const Mindmap = ({ onNav }) => {
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 48px)" }}>
+    <div style={{ display:"flex", flexDirection:"column", height:"calc(100dvh - 48px)" }}>
       <div style={{ background:C.bg2, borderBottom:`1px solid ${C.border}`, padding:"12px 24px", display:"flex", alignItems:"center", gap:16, flexShrink:0 }}>
         <BackBtn onNav={onNav} />
         <div>
@@ -1612,7 +1610,7 @@ const Plan = ({ onNav }) => {
 
   const TRow = ({ label, val, color, light }) => (
     <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, padding:"7px 0", alignItems:"flex-start", background: light ? C.bg3 : "transparent" }}>
-      <div style={{ width:200, flexShrink:0, fontSize:11, color:C.muted, paddingRight:12 }}>{label}</div>
+      <div style={{ width:"clamp(90px, 35%, 200px)", flexShrink:0, fontSize:11, color:C.muted, paddingRight:12 }}>{label}</div>
       <div style={{ fontSize:11, color: color || C.navy, fontWeight: color ? 600 : 400 }}>{val}</div>
     </div>
   );
@@ -1621,7 +1619,7 @@ const Plan = ({ onNav }) => {
     const col = score === 2 ? C.teal : score === 1 ? C.amber : C.coral;
     return (
       <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, padding:"8px 0", gap:12, alignItems:"flex-start" }}>
-        <div style={{ width:160, flexShrink:0, fontSize:11, fontWeight:600, color:C.navy }}>{driver}</div>
+        <div style={{ width:"clamp(80px, 30%, 160px)", flexShrink:0, fontSize:11, fontWeight:600, color:C.navy }}>{driver}</div>
         <div style={{ width:60, flexShrink:0 }}>
           <span style={{ background:col+"18", color:col, border:`1px solid ${col}33`, borderRadius:3, padding:"1px 8px", fontSize:10, fontWeight:700 }}>{score}/2</span>
         </div>
@@ -1634,7 +1632,7 @@ const Plan = ({ onNav }) => {
     const pill = (val, c) => <span style={{ background:c+"18", color:c, border:`1px solid ${c}33`, borderRadius:3, padding:"1px 7px", fontSize:9, fontWeight:700, whiteSpace:"nowrap" }}>{val}</span>;
     const rc = v => v === "High" ? C.teal : v === "Low" ? C.coral : v === "Mid" ? C.amber : v === "Yes" ? C.teal : C.coral;
     return (
-      <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1fr 1fr 1fr", borderBottom:`1px solid ${C.border}`, padding:"8px 0", gap:8, alignItems:"center" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"minmax(80px,1.4fr) minmax(50px,1fr) minmax(50px,1fr) minmax(50px,1fr) minmax(50px,1fr)", borderBottom:`1px solid ${C.border}`, padding:"8px 0", gap:6, alignItems:"center" }}>
         <div><div style={{ fontSize:11, fontWeight:600, color:C.navy }}>{name}</div><div style={{ fontSize:9, color:C.dim }}>{sub}</div></div>
         {[sme, capture, openness].map((v,i) => <div key={i}>{pill(v, rc(v))}</div>)}
         <div>{pill(gov, govColor || rc(gov))}</div>
@@ -1647,7 +1645,7 @@ const Plan = ({ onNav }) => {
     return (
       <div style={{ display:"flex", borderBottom:`1px solid ${C.border}`, padding:"8px 0", gap:10, background: light ? C.bg3 : "transparent" }}>
         <div style={{ flex:2, fontSize:11, color:C.navy, lineHeight:1.4 }}>{req} <span style={{ fontSize:9, color:C.dim }}>({art})</span></div>
-        <div style={{ width:100, flexShrink:0 }}>
+        <div style={{ width:"clamp(70px, 22%, 100px)", flexShrink:0 }}>
           <span style={{ background:col+"18", color:col, border:`1px solid ${col}33`, borderRadius:3, padding:"1px 7px", fontSize:9, fontWeight:700 }}>{result}</span>
         </div>
         <div style={{ flex:2, fontSize:10, color:C.muted, lineHeight:1.45 }}>{evidence}</div>
@@ -1697,7 +1695,8 @@ const Plan = ({ onNav }) => {
       finding:"Result: every platform without proactive governance shows capture and low SME access. Catena-X scores High on all three. H2 confirmed.",
       detail: (
         <div>
-          <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 1fr 1fr 1fr", borderBottom:`2px solid ${C.border}`, padding:"0 0 6px", marginBottom:4, gap:8 }}>
+          <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch", marginBottom:8 }}><div style={{ minWidth:340 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"minmax(80px,1.4fr) minmax(50px,1fr) minmax(50px,1fr) minmax(50px,1fr) minmax(50px,1fr)", borderBottom:`2px solid ${C.border}`, padding:"0 0 6px", marginBottom:4, gap:6 }}>
             {["Platform","SME access","Capture","Openness","Gov. proactive?"].map(h => (
               <div key={h} style={{ fontSize:9, fontWeight:700, color:C.dim, textTransform:"uppercase", letterSpacing:".08em" }}>{h}</div>
             ))}
@@ -1706,6 +1705,7 @@ const Plan = ({ onNav }) => {
           <CaseRow name="project44" sub="VC-backed private, founded 2014" sme="Low" capture="High" open="Mid" gov="No" />
           <CaseRow name="Catena-X" sub="Non-profit association, founded 2021" sme="High" capture="Low" open="High" gov="Yes" govColor={C.teal} />
           <CaseRow name="INTTRA" sub="Neutral consortium, acquired 2018" sme="Mid" capture="High" open="Mid" gov="No" />
+          </div></div>
           <div style={{ marginTop:14, fontSize:11, fontWeight:700, color:C.navy, marginBottom:8 }}>Why the pattern holds</div>
           <div style={{ fontSize:11, color:C.muted, lineHeight:1.65 }}>
             Transporeon and INTTRA both began as neutral platforms. Without a legal prohibition on commercial sale built into their governance, both were acquired once they reached critical mass. Catena-X is the only case where the founding structure (a non-profit association with binding Ten Golden Rules) prevented this. The pattern directly confirms H2 and provides the outcome evidence for H3.
@@ -2356,7 +2356,7 @@ const Admin = ({ onNav }) => {
   return (
     <div style={{ maxWidth:720, margin:"0 auto", padding:"40px 24px"}} className="page-pad">
       <BackBtn onNav={onNav} />
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:20 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12, marginBottom:20 }}>
         <div>
           <PageHeader label="Admin panel" title="Research data overview" />
           {lastUpdated && (
@@ -2365,7 +2365,7 @@ const Admin = ({ onNav }) => {
             </div>
           )}
         </div>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
           <button onClick={() => fetchData()} disabled={refreshing}
             style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:5, padding:"8px 14px", fontSize:11, cursor:refreshing?"default":"pointer", color:refreshing?C.dim:C.blue, fontFamily:"inherit", display:"flex", alignItems:"center", gap:5 }}>
             <span style={{ display:"inline-block", animation: refreshing ? "spin 1s linear infinite" : "none", fontSize:12 }}>↻</span>
