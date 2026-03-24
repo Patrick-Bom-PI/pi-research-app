@@ -933,20 +933,36 @@ function MindMapViz() {
       {/* ── DETAIL PANEL ── */}
       {(selPaper || selCluster || selGap || selOQ || selQuestion) && (
         <div style={{
-          position: "absolute", bottom: "max(12px, env(safe-area-inset-bottom, 12px))", left: "50%", transform: "translateX(-50%)",
-          width: "min(780px, 94vw)", maxHeight: "60vh", overflowY: "auto",
+          position: "absolute",
+          bottom: "max(12px, env(safe-area-inset-bottom, 12px))",
+          left: "50%", transform: "translateX(-50%)",
+          width: "min(780px, 96vw)",
+          maxHeight: "75dvh",
+          display: "flex", flexDirection: "column",
           background: "rgba(18,22,42,0.97)", backdropFilter: "blur(14px)",
           border: `1px solid ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}44`,
-          borderRadius: 14, padding: "18px 22px 16px",
+          borderRadius: 14,
           zIndex: 30,
           boxShadow: `0 0 48px ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}18, 0 10px 40px rgba(0,0,0,0.75)`,
           pointerEvents: "auto",
         }}>
-          <button onClick={() => setSelected(null)} style={{
-            position: "absolute", top: 10, right: 12,
-            background: "none", border: "none", color: "rgba(255,255,255,0.65)",
-            cursor: "pointer", fontSize: 20, lineHeight: 1,
-          }}>×</button>
+          {/* Sticky close button bar */}
+          <div style={{
+            display: "flex", justifyContent: "flex-end",
+            padding: "10px 12px 0", flexShrink: 0,
+          }}>
+            <button onClick={() => setSelected(null)} style={{
+              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 6, color: "rgba(255,255,255,0.8)",
+              cursor: "pointer", fontSize: 14, lineHeight: 1,
+              padding: "4px 10px", fontFamily: "inherit",
+            }}>✕ close</button>
+          </div>
+          {/* Scrollable content */}
+          <div style={{
+            overflowY: "auto", WebkitOverflowScrolling: "touch",
+            padding: "10px 22px 20px", flex: 1,
+          }}>
 
           {/* ── Research Gap panel ── */}
           {selGap && (
@@ -1167,6 +1183,7 @@ function MindMapViz() {
               </div>
             </>
           )}
+          </div>
         </div>
       )}
 
