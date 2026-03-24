@@ -432,72 +432,88 @@ function MindMapViz() {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 600;
   const [zoom, setZoom] = useState(isMobile ? 0.28 : 0.46);
   const [dragging, setDragging] = useState(false);
-  const [lastMouse, setLastMouse] = useState(null);
-  const [lastTouchDist, setLastTouchDist] = useState(null);
   const [legendOpen, setLegendOpen] = useState(!isMobile);
   const svgRef = useRef(null);
 
+  // Use refs for touch state so handlers never go stale
+  const touchRef = useRef({ dragging: false, lastX: 0, lastY: 0, lastDist: null });
+
   const handleWheel = useCallback((e) => {
     e.preventDefault();
-    setZoom((z) => Math.min(2.5, Math.max(0.28, z - e.deltaY * 0.001)));
+    setZoom((z) => Math.min(2.5, Math.max(0.18, z - e.deltaY * 0.001)));
   }, []);
 
   useEffect(() => {
     const el = svgRef.current;
     if (!el) return;
+
+    const onTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        touchRef.current.dragging = true;
+        touchRef.current.lastX = e.touches[0].clientX;
+        touchRef.current.lastY = e.touches[0].clientY;
+        touchRef.current.lastDist = null;
+      } else if (e.touches.length === 2) {
+        touchRef.current.dragging = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        touchRef.current.lastDist = Math.sqrt(dx * dx + dy * dy);
+      }
+    };
+
+    const onTouchMove = (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && touchRef.current.dragging) {
+        const dx = e.touches[0].clientX - touchRef.current.lastX;
+        const dy = e.touches[0].clientY - touchRef.current.lastY;
+        setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+        touchRef.current.lastX = e.touches[0].clientX;
+        touchRef.current.lastY = e.touches[0].clientY;
+      } else if (e.touches.length === 2 && touchRef.current.lastDist !== null) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const delta = dist - touchRef.current.lastDist;
+        setZoom((z) => Math.min(2.5, Math.max(0.18, z + delta * 0.004)));
+        touchRef.current.lastDist = dist;
+      }
+    };
+
+    const onTouchEnd = () => {
+      touchRef.current.dragging = false;
+      touchRef.current.lastDist = null;
+    };
+
     el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
   }, [handleWheel]);
 
   // Mouse handlers
+  const mouseRef = useRef({ dragging: false, lastX: 0, lastY: 0 });
   const onMouseDown = (e) => {
     if (e.button !== 0) return;
+    mouseRef.current.dragging = true;
+    mouseRef.current.lastX = e.clientX;
+    mouseRef.current.lastY = e.clientY;
     setDragging(true);
-    setLastMouse({ x: e.clientX, y: e.clientY });
   };
   const onMouseMove = (e) => {
-    if (!dragging || !lastMouse) return;
-    setPan((p) => ({ x: p.x + e.clientX - lastMouse.x, y: p.y + e.clientY - lastMouse.y }));
-    setLastMouse({ x: e.clientX, y: e.clientY });
+    if (!mouseRef.current.dragging) return;
+    const dx = e.clientX - mouseRef.current.lastX;
+    const dy = e.clientY - mouseRef.current.lastY;
+    setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+    mouseRef.current.lastX = e.clientX;
+    mouseRef.current.lastY = e.clientY;
   };
-  const onMouseUp = () => { setDragging(false); setLastMouse(null); };
-
-  // Touch handlers
-  const onTouchStart = (e) => {
-    if (e.touches.length === 1) {
-      setDragging(true);
-      setLastMouse({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-      setLastTouchDist(null);
-    } else if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      setLastTouchDist(Math.sqrt(dx * dx + dy * dy));
-    }
-  };
-  const onTouchMove = (e) => {
-    e.preventDefault();
-    if (e.touches.length === 1 && dragging && lastMouse) {
-      const dx = e.touches[0].clientX - lastMouse.x;
-      const dy = e.touches[0].clientY - lastMouse.y;
-      setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
-      setLastMouse({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-    } else if (e.touches.length === 2 && lastTouchDist) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const delta = dist - lastTouchDist;
-      setZoom((z) => Math.min(2.5, Math.max(0.18, z + delta * 0.003)));
-      setLastTouchDist(dist);
-    }
-  };
-  const onTouchEnd = () => { setDragging(false); setLastMouse(null); setLastTouchDist(null); };
-
-  useEffect(() => {
-    const el = svgRef.current;
-    if (!el) return;
-    el.addEventListener("touchmove", onTouchMove, { passive: false });
-    return () => el.removeEventListener("touchmove", onTouchMove);
-  }, [onTouchMove]);
+  const onMouseUp = () => { mouseRef.current.dragging = false; setDragging(false); };
 
   const selPaper = selected ? allPapers.find((p) => p.id === selected) : null;
   const selCluster = selected ? CLUSTERS.find((c) => c.id === selected) : null;
@@ -536,7 +552,6 @@ function MindMapViz() {
       }}
       onMouseDown={onMouseDown} onMouseMove={onMouseMove}
       onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
     >
       {/* HEADER */}
       <div style={{
@@ -1159,10 +1174,10 @@ function MindMapViz() {
 
       {/* ── LEGEND ── */}
       <div style={{
-        position: "absolute", top: 68, right: 16,
-        background: "rgba(18,22,42,0.92)", border: "1px solid rgba(255,255,255,0.07)",
+        position: "absolute", top: 68,
+        ...(isMobile ? { left: 8, right: 8, maxWidth: legendOpen ? "calc(100% - 16px)" : 44 } : { right: 16, maxWidth: legendOpen ? 180 : 44 }),
+        background: "rgba(18,22,42,0.95)", border: "1px solid rgba(255,255,255,0.12)",
         borderRadius: 9, zIndex: 20, overflow: "hidden",
-        maxWidth: isMobile ? 44 : 160,
       }}>
         {/* Toggle button, always visible on mobile */}
         <div onClick={() => setLegendOpen(o => !o)} style={{
@@ -1228,7 +1243,7 @@ function MindMapViz() {
       </div>
 
       {/* ── ZOOM ── */}
-      <div style={{ position: "absolute", bottom: 20, right: 16, display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
+      <div style={{ position: "absolute", bottom: 20, ...(isMobile ? { left: 8 } : { right: 16 }), display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
         {[
           { label: "+", fn: () => setZoom(z => Math.min(2.5, z + 0.15)) },
           { label: "−", fn: () => setZoom(z => Math.max(0.18, z - 0.15)) },
