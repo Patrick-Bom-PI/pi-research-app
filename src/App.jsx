@@ -932,7 +932,12 @@ function MindMapViz() {
 
       {/* ── DETAIL PANEL ── */}
       {(selPaper || selCluster || selGap || selOQ || selQuestion) && (
-        <div style={{
+        <div
+          onTouchStart={e => e.stopPropagation()}
+          onTouchMove={e => e.stopPropagation()}
+          onTouchEnd={e => e.stopPropagation()}
+          onWheel={e => e.stopPropagation()}
+          style={{
           position: "absolute",
           top: "10dvh",
           left: "50%", transform: "translateX(-50%)",
@@ -1609,9 +1614,24 @@ const Landing = ({ onNav }) => {
 
 
 const Mindmap = ({ onNav }) => {
+  useEffect(() => {
+    // Prevent the entire page from scrolling while the mindmap is open
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"calc(100dvh - 48px)" }}>
-      <div style={{ background:C.bg2, borderBottom:`1px solid ${C.border}`, padding:"12px 24px", display:"flex", alignItems:"center", gap:16, flexShrink:0 }}>
+    <div style={{
+      position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+      display: "flex", flexDirection: "column",
+      zIndex: 5,
+    }}>
+      {/* Mindmap header bar */}
+      <div style={{ background:C.bg2, borderBottom:`1px solid ${C.border}`, padding:"12px 24px", display:"flex", alignItems:"center", gap:16, flexShrink:0, height:48, zIndex:6 }}>
         <BackBtn onNav={onNav} />
         <div>
           <div style={{ fontSize:10, fontWeight:700, letterSpacing:".16em", textTransform:"uppercase", color:C.navy }}>Literature review</div>
@@ -1619,7 +1639,7 @@ const Mindmap = ({ onNav }) => {
         </div>
         <div style={{ marginLeft:"auto", fontSize:11, color:C.dim }}>{typeof window !== "undefined" && window.innerWidth < 600 ? "Drag to pan · Pinch to zoom · Tap a node" : "Scroll to zoom · Drag to pan · Click a node to read"}</div>
       </div>
-      <div style={{ flex:1, overflow:"hidden" }}>
+      <div style={{ flex:1, overflow:"hidden", position:"relative" }}>
         <MindMapViz />
       </div>
     </div>
@@ -2515,6 +2535,7 @@ export default function App() {
   const Page = pages[page]||Landing;
   const nav = (p) => { setPage(p); setMenuOpen(false); window.scrollTo(0,0); };
   const navLinks = [["home","Home"],["mindmap","Mind map"],["plan","Methods"],["participate","Participate"]];
+  const isMindmap = page === "mindmap";
   return (
     <div style={{ background:C.bg, minHeight:"100vh", color:C.text, fontFamily:"'Segoe UI',system-ui,sans-serif" }}>
       <style>{`
@@ -2537,32 +2558,31 @@ export default function App() {
         input, textarea, button, select { font-family: inherit; }
       `}</style>
 
-      {/* ── Top nav ── */}
-      <div style={{ background:C.bg2, borderBottom:`1px solid ${C.border}`, padding:"0 20px", position:"sticky", top:0, zIndex:10 }}>
-        <div style={{ maxWidth:720, margin:"0 auto", height:48, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <button onClick={() => nav("home")} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:13, fontWeight:700, color:C.navy, padding:0 }}>
-            PI Governance Research
-          </button>
-          {/* Desktop nav */}
-          <div className="nav-links-desktop" style={{ display:"flex", gap:20 }}>
-            {navLinks.map(([p,l]) => (
-              <button key={p} onClick={() => nav(p)} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontSize:12, color:page===p?C.blue:C.dim, fontWeight:page===p?700:400, borderBottom:`2px solid ${page===p?C.blue:"transparent"}`, padding:"0 0 2px" }}>{l}</button>
-            ))}
+      {/* Top nav: hidden on mindmap page since mindmap has its own fixed header */}
+      {!isMindmap && (
+        <div style={{ background:C.bg2, borderBottom:`1px solid ${C.border}`, padding:"0 20px", position:"sticky", top:0, zIndex:10 }}>
+          <div style={{ maxWidth:720, margin:"0 auto", height:48, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <button onClick={() => nav("home")} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"Georgia,serif", fontSize:13, fontWeight:700, color:C.navy, padding:0 }}>
+              PI Governance Research
+            </button>
+            <div className="nav-links-desktop" style={{ display:"flex", gap:20 }}>
+              {navLinks.map(([p,l]) => (
+                <button key={p} onClick={() => nav(p)} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontSize:12, color:page===p?C.blue:C.dim, fontWeight:page===p?700:400, borderBottom:`2px solid ${page===p?C.blue:"transparent"}`, padding:"0 0 2px" }}>{l}</button>
+              ))}
+            </div>
+            <button className="show-mobile" onClick={() => setMenuOpen(o => !o)} style={{ background:"none", border:"none", cursor:"pointer", color:C.navy, fontSize:20, padding:"4px 0", alignItems:"center" }}>
+              {menuOpen ? "✕" : "☰"}
+            </button>
           </div>
-          {/* Mobile hamburger */}
-          <button className="show-mobile" onClick={() => setMenuOpen(o => !o)} style={{ background:"none", border:"none", cursor:"pointer", color:C.navy, fontSize:20, padding:"4px 0", alignItems:"center" }}>
-            {menuOpen ? "✕" : "☰"}
-          </button>
+          {menuOpen && (
+            <div className="show-mobile" style={{ flexDirection:"column", borderTop:`1px solid ${C.border}`, background:C.bg2, paddingBottom:8 }}>
+              {navLinks.map(([p,l]) => (
+                <button key={p} onClick={() => nav(p)} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontSize:13, color:page===p?C.blue:C.navy, fontWeight:page===p?700:400, padding:"10px 20px", textAlign:"left", borderLeft:page===p?`3px solid ${C.blue}`:"3px solid transparent" }}>{l}</button>
+              ))}
+            </div>
+          )}
         </div>
-        {/* Mobile dropdown menu */}
-        {menuOpen && (
-          <div className="show-mobile" style={{ flexDirection:"column", borderTop:`1px solid ${C.border}`, background:C.bg2, paddingBottom:8 }}>
-            {navLinks.map(([p,l]) => (
-              <button key={p} onClick={() => nav(p)} style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"inherit", fontSize:13, color:page===p?C.blue:C.navy, fontWeight:page===p?700:400, padding:"10px 20px", textAlign:"left", borderLeft:page===p?`3px solid ${C.blue}`:"3px solid transparent" }}>{l}</button>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       <Page onNav={nav} />
     </div>
