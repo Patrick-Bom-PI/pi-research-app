@@ -429,9 +429,12 @@ function MindMapViz() {
   const [selected, setSelected] = useState(null);
   const [hoveredConn, setHoveredConn] = useState(null);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(0.46);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 600;
+  const [zoom, setZoom] = useState(isMobile ? 0.28 : 0.46);
   const [dragging, setDragging] = useState(false);
   const [lastMouse, setLastMouse] = useState(null);
+  const [lastTouchDist, setLastTouchDist] = useState(null);
+  const [legendOpen, setLegendOpen] = useState(!isMobile);
   const svgRef = useRef(null);
 
   const handleWheel = useCallback((e) => {
@@ -446,6 +449,7 @@ function MindMapViz() {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
 
+  // Mouse handlers
   const onMouseDown = (e) => {
     if (e.button !== 0) return;
     setDragging(true);
@@ -457,6 +461,43 @@ function MindMapViz() {
     setLastMouse({ x: e.clientX, y: e.clientY });
   };
   const onMouseUp = () => { setDragging(false); setLastMouse(null); };
+
+  // Touch handlers
+  const onTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      setDragging(true);
+      setLastMouse({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+      setLastTouchDist(null);
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      setLastTouchDist(Math.sqrt(dx * dx + dy * dy));
+    }
+  };
+  const onTouchMove = (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && dragging && lastMouse) {
+      const dx = e.touches[0].clientX - lastMouse.x;
+      const dy = e.touches[0].clientY - lastMouse.y;
+      setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+      setLastMouse({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    } else if (e.touches.length === 2 && lastTouchDist) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const delta = dist - lastTouchDist;
+      setZoom((z) => Math.min(2.5, Math.max(0.18, z + delta * 0.003)));
+      setLastTouchDist(dist);
+    }
+  };
+  const onTouchEnd = () => { setDragging(false); setLastMouse(null); setLastTouchDist(null); };
+
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onTouchMove);
+  }, [onTouchMove]);
 
   const selPaper = selected ? allPapers.find((p) => p.id === selected) : null;
   const selCluster = selected ? CLUSTERS.find((c) => c.id === selected) : null;
@@ -495,6 +536,7 @@ function MindMapViz() {
       }}
       onMouseDown={onMouseDown} onMouseMove={onMouseMove}
       onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
     >
       {/* HEADER */}
       <div style={{
@@ -1119,11 +1161,21 @@ function MindMapViz() {
       <div style={{
         position: "absolute", top: 68, right: 16,
         background: "rgba(18,22,42,0.92)", border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 9, padding: "12px 14px", zIndex: 20,
+        borderRadius: 9, zIndex: 20, overflow: "hidden",
+        maxWidth: isMobile ? 44 : 160,
       }}>
-        <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.82)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>
-          5 Literature Clusters
+        {/* Toggle button, always visible on mobile */}
+        <div onClick={() => setLegendOpen(o => !o)} style={{
+          padding: legendOpen ? "10px 14px 6px" : "10px 14px",
+          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+        }}>
+          <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.82)", letterSpacing: "0.1em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+            {legendOpen ? "5 Literature Clusters" : "☰"}
+          </div>
+          {legendOpen && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>✕</span>}
         </div>
+        {legendOpen && (
+          <div style={{ padding: "0 14px 12px" }}>
         {CLUSTERS.map((c) => (
           <div key={c.id} onClick={() => setSelected(selected === c.id ? null : c.id)}
             style={{
@@ -1171,14 +1223,16 @@ function MindMapViz() {
             Dashed lines = cross-links
           </div>
         </div>
+          </div>
+        )}
       </div>
 
       {/* ── ZOOM ── */}
       <div style={{ position: "absolute", bottom: 20, right: 16, display: "flex", flexDirection: "column", gap: 4, zIndex: 20 }}>
         {[
           { label: "+", fn: () => setZoom(z => Math.min(2.5, z + 0.15)) },
-          { label: "−", fn: () => setZoom(z => Math.max(0.28, z - 0.15)) },
-          { label: "⟳", fn: () => { setZoom(0.46); setPan({ x: 0, y: 0 }); } },
+          { label: "−", fn: () => setZoom(z => Math.max(0.18, z - 0.15)) },
+          { label: "⟳", fn: () => { setZoom(isMobile ? 0.28 : 0.46); setPan({ x: 0, y: 0 }); } },
         ].map((b) => (
           <button key={b.label} onClick={b.fn} style={{
             width: 30, height: 30, background: "rgba(255,255,255,0.12)",
@@ -1528,7 +1582,7 @@ const Mindmap = ({ onNav }) => {
           <div style={{ fontSize:10, fontWeight:700, letterSpacing:".16em", textTransform:"uppercase", color:C.navy }}>Literature review</div>
           <div style={{ fontSize:15, fontWeight:700, color:C.navy, fontFamily:"Georgia,serif" }}>23 sources across 5 research clusters</div>
         </div>
-        <div style={{ marginLeft:"auto", fontSize:11, color:C.dim }}>Scroll to zoom · Drag to pan · Click a node to read</div>
+        <div style={{ marginLeft:"auto", fontSize:11, color:C.dim }}>{typeof window !== "undefined" && window.innerWidth < 600 ? "Drag to pan · Pinch to zoom · Tap a node" : "Scroll to zoom · Drag to pan · Click a node to read"}</div>
       </div>
       <div style={{ flex:1, overflow:"hidden" }}>
         <MindMapViz />
