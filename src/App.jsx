@@ -934,34 +934,39 @@ function MindMapViz() {
       {(selPaper || selCluster || selGap || selOQ || selQuestion) && (
         <div style={{
           position: "absolute",
-          bottom: "max(12px, env(safe-area-inset-bottom, 12px))",
+          top: "10dvh",
           left: "50%", transform: "translateX(-50%)",
           width: "min(780px, 96vw)",
-          maxHeight: "75dvh",
+          height: "80dvh",
           display: "flex", flexDirection: "column",
-          background: "rgba(18,22,42,0.97)", backdropFilter: "blur(14px)",
-          border: `1px solid ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}44`,
+          background: "rgba(14,18,36,0.98)",
+          border: `1px solid ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}55`,
           borderRadius: 14,
           zIndex: 30,
-          boxShadow: `0 0 48px ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}18, 0 10px 40px rgba(0,0,0,0.75)`,
+          boxShadow: `0 0 48px ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}18, 0 10px 40px rgba(0,0,0,0.85)`,
           pointerEvents: "auto",
+          overflow: "hidden",
         }}>
           {/* Sticky close button bar */}
           <div style={{
-            display: "flex", justifyContent: "flex-end",
-            padding: "10px 12px 0", flexShrink: 0,
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "10px 16px 8px", flexShrink: 0,
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
           }}>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: ".1em" }}>
+              {selGap ? "Research Gap" : selOQ ? "Open Questions" : selQuestion ? "Research Direction" : selCluster ? selCluster.keyword : selPaper ? selPaper.cluster.keyword : ""}
+            </span>
             <button onClick={() => setSelected(null)} style={{
               background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
               borderRadius: 6, color: "rgba(255,255,255,0.8)",
-              cursor: "pointer", fontSize: 14, lineHeight: 1,
-              padding: "4px 10px", fontFamily: "inherit",
-            }}>✕ close</button>
+              cursor: "pointer", fontSize: 13, lineHeight: 1,
+              padding: "5px 12px", fontFamily: "inherit",
+            }}>✕ Close</button>
           </div>
-          {/* Scrollable content */}
+          {/* Scrollable content. minHeight:0 is required for flex+overflow to work on iOS */}
           <div style={{
-            overflowY: "auto", WebkitOverflowScrolling: "touch",
-            padding: "10px 22px 20px", flex: 1,
+            overflowY: "scroll", WebkitOverflowScrolling: "touch",
+            padding: "16px 20px 28px", flex: 1, minHeight: 0,
           }}>
 
           {/* ── Research Gap panel ── */}
@@ -1156,7 +1161,7 @@ function MindMapViz() {
               </div>
               <div style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${Math.min(selCluster.papers.length, 4)}, 1fr)`,
+                gridTemplateColumns: `repeat(auto-fill, minmax(160px, 1fr))`,
                 gap: 8, marginTop: 10,
               }}>
                 {selCluster.papers.map((p) => (
