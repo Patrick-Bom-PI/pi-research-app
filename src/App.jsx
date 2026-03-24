@@ -548,7 +548,7 @@ function MindMapViz() {
   return (
     <div
       style={{
-        width: "100%", height: "100dvh", background: "#111827",
+        width: "100%", height: "100%", background: "#111827",
         fontFamily: "Georgia, 'Times New Roman', serif",
         overflow: "hidden", position: "relative",
         cursor: dragging ? "grabbing" : "default", userSelect: "none",
@@ -939,10 +939,9 @@ function MindMapViz() {
           onWheel={e => e.stopPropagation()}
           style={{
           position: "absolute",
-          top: "10dvh",
+          top: "4%", bottom: "4%",
           left: "50%", transform: "translateX(-50%)",
           width: "min(780px, 96vw)",
-          height: "80dvh",
           display: "flex", flexDirection: "column",
           background: "rgba(14,18,36,0.98)",
           border: `1px solid ${selGap ? "#FF6B6B" : selOQ || selQuestion ? OQ_COLOR : (selPaper?.cluster || selCluster)?.color}55`,
