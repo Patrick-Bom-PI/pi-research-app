@@ -1396,7 +1396,7 @@ const BarChart = ({ data, color, title }) => {
 };
 
 const Tooltip = ({ text }) => {
-  const [show, setShow] = React.useState(false);
+  const [show, setShow] = useState(false);
   return (
     <span style={{ position:"relative", display:"inline-block", marginLeft:5, verticalAlign:"middle" }}>
       <span
