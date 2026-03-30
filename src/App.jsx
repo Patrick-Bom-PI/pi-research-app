@@ -1395,29 +1395,55 @@ const BarChart = ({ data, color, title }) => {
   );
 };
 
+const Tooltip = ({ text }) => {
+  const [show, setShow] = React.useState(false);
+  return (
+    <span style={{ position:"relative", display:"inline-block", marginLeft:5, verticalAlign:"middle" }}>
+      <span
+        onMouseEnter={()=>setShow(true)} onMouseLeave={()=>setShow(false)}
+        onClick={()=>setShow(s=>!s)}
+        style={{ display:"inline-flex", alignItems:"center", justifyContent:"center",
+          width:16, height:16, borderRadius:"50%", background:C.blue+"22",
+          border:`1px solid ${C.blue}44`, color:C.blue, fontSize:10, fontWeight:700,
+          cursor:"pointer", userSelect:"none", lineHeight:1 }}>?</span>
+      {show && (
+        <span style={{ position:"absolute", left:"50%", bottom:"calc(100% + 6px)",
+          transform:"translateX(-50%)", background:C.navy, color:"#fff",
+          fontSize:11, lineHeight:1.5, padding:"8px 12px", borderRadius:6,
+          width:260, zIndex:100, boxShadow:"0 4px 16px rgba(0,0,0,0.18)",
+          pointerEvents:"none", display:"block" }}>{text}
+          <span style={{ position:"absolute", left:"50%", top:"100%", transform:"translateX(-50%)",
+            width:0, height:0, borderLeft:"6px solid transparent",
+            borderRight:"6px solid transparent", borderTop:`6px solid ${C.navy}` }} />
+        </span>
+      )}
+    </span>
+  );
+};
+
 const SURVEY_QS = [
-  {id:"s1",block:"H1",q:"A single PI routing platform would give its owner significant power over logistics operators who depend on it."},
-  {id:"s2",block:"H1",q:"The value of a PI routing platform increases the more operators join, making fair access harder for latecomers."},
-  {id:"s3",block:"H1",q:"Once integrated with a PI platform, switching to an alternative would be difficult and costly."},
-  {id:"s4",block:"H1",q:"A PI platform operator accumulates routing and pricing data that gives it a structural advantage over non-operators."},
-  {id:"s5",block:"H2",q:"Without governance rules set before launch, a PI platform would eventually be controlled by one or two large incumbents."},
-  {id:"s6",block:"H2",q:"SME logistics operators would be at a structural disadvantage on a privately owned PI platform."},
-  {id:"s7",block:"H2",q:"PI deployments that skip governance design tend to produce fragmented, limited outcomes."},
-  {id:"s8",block:"H2",q:"Whoever controls the PI platform's data standards effectively controls who can participate in the Physical Internet."},
-  {id:"s9",block:"H3",q:"The PI platform owner should be legally prohibited from using participant data for its own commercial purposes."},
-  {id:"s10",block:"H3",q:"A neutral intermediary body not owned by any logistics operator would be the most appropriate owner of PI central infrastructure."},
-  {id:"s11",block:"H3",q:"The EU Data Governance Act's data intermediary category provides an appropriate legal basis for governing PI."},
-  {id:"s12",block:"H3",q:"Existing EU competition law alone would adequately protect logistics operators from a dominant PI platform."},
-  {id:"s13",block:"H3",q:"A governance body similar to the IETF, which is open, protocol-focused, and independent, would be preferable to private PI ownership."},
-  {id:"s14",block:"H3",q:"I would share sensitive logistics data more willingly with a neutral data intermediary than with a private PI platform operator."},
+  {id:"s1",block:"H1",q:"If a single company owned and operated the central PI routing platform, it would have significant power over all logistics operators that depend on it."},
+  {id:"s2",block:"H1",q:"The more logistics operators join the PI platform, the more valuable it becomes, but also the harder it gets for smaller or newer players to access it on fair terms.",tip:"This is known as a network effect: a platform becomes more powerful as more people use it, which can make it difficult for newcomers to join unless the owner allows it."},
+  {id:"s3",block:"H1",q:"Once a logistics company has connected its systems to a PI platform, moving to a different platform would be technically difficult and expensive."},
+  {id:"s4",block:"H1",q:"The company running the PI platform would collect large amounts of routing, capacity, and pricing data from all users, giving it an information advantage that non-owners cannot match.",tip:"Think of it like a marketplace operator who can see all transactions across all sellers. That data advantage can be used to undercut competitors or favour certain users."},
+  {id:"s5",block:"H2",q:"If no ownership and governance rules are set before the PI platform launches, it will most likely end up controlled by one or two large carriers or tech companies.",tip:"Incumbents are the large, established players already dominant in the market, such as major carriers or freight brokers, who have the resources to acquire or outcompete smaller operators."},
+  {id:"s6",block:"H2",q:"Small and medium-sized logistics operators (SMEs) would be at a disadvantage on a PI platform owned by a large commercial party, compared to that owner's own operations."},
+  {id:"s7",block:"H2",q:"When a shared logistics platform is built without clear rules about who owns it and how decisions are made, it tends to end up serving a small group of dominant players rather than the whole sector.",tip:"Examples from other sectors: port community systems, ocean shipping platforms, and automotive data spaces all show that platforms launched without governance rules became concentrated under a few owners within years."},
+  {id:"s8",block:"H2",q:"Whoever defines the technical data standards for the PI platform , such as how shipment data is formatted and exchanged, effectively decides who is allowed to participate and on what terms."},
+  {id:"s9",block:"H3",q:"The owner of the PI platform should be legally prohibited from using the logistics data of participants for its own commercial purposes, such as market analysis or competing services."},
+  {id:"s10",block:"H3",q:"The PI platform should be owned and operated by a neutral body that has no commercial interest in logistics, not by any carrier, forwarder, or technology company."},
+  {id:"s11",block:"H3",q:"The EU already has a law, the Data Governance Act (2022), that creates a category of neutral data-sharing organisations. This framework would be a suitable legal basis for governing the PI platform.",tip:"The EU Data Governance Act (DGA) became applicable in September 2023. It defines a category called a 'data intermediary': an organisation that facilitates data sharing between parties but is legally prohibited from using that data commercially. No new legislation would be needed to apply this to PI."},
+  {id:"s12",block:"H3",q:"EU competition law on its own, without any specific PI governance rules, would be sufficient to prevent a dominant PI platform owner from abusing its position.",tip:"EU competition law (Articles 101-102 TFEU) prohibits abuse of dominant market position. However, it is reactive: it only intervenes after harm has occurred and requires lengthy legal proceedings. Sector-specific governance rules can prevent harm before it happens."},
+  {id:"s13",block:"H3",q:"The PI platform would be better governed by an independent, open, non-profit body, focused only on maintaining the platform as shared infrastructure, rather than being owned by a commercial party.",tip:"The IETF (Internet Engineering Task Force) is an example: it governs the technical standards of the internet as a neutral, open body without owning the internet itself. Several researchers argue PI needs a similar model."},
+  {id:"s14",block:"H3",q:"I would be more willing to share my organisation's logistics data on a PI platform if it was operated by a neutral party with no commercial interests, compared to a platform owned by a competitor or large carrier."},
 ];
 const CHOICE_SCENARIOS = [
-  {ownership:"Private incumbent (major carrier)",cost:"High: €4,000/month",data:"Owner may use your data commercially",governance:"Owner sets rules unilaterally"},
-  {ownership:"EU data intermediary (neutral)",cost:"Low: €250/month",data:"Data legally ring-fenced",governance:"Independent EU regulator oversees"},
-  {ownership:"Industry consortium",cost:"Medium: €1,200/month",data:"Used only for routing",governance:"Consortium board votes by majority"},
-  {ownership:"Private incumbent (major carrier)",cost:"Medium: €1,200/month",data:"Data legally ring-fenced",governance:"Consortium board votes by majority"},
-  {ownership:"EU data intermediary (neutral)",cost:"High: €4,000/month",data:"Owner may use your data commercially",governance:"Owner sets rules unilaterally"},
-  {ownership:"Industry consortium",cost:"Low: €250/month",data:"Data legally ring-fenced",governance:"Independent EU regulator oversees"},
+  {ownership:"Private: owned by a major carrier or tech company",cost:"High: €4,000/month",data:"Owner may use your data for its own commercial purposes",governance:"Owner sets all platform rules unilaterally"},
+  {ownership:"EU data intermediary: neutral non-profit body",cost:"Low: €250/month",data:"Your data is legally ring-fenced: used only for routing",governance:"Overseen by an independent EU regulator"},
+  {ownership:"Industry consortium: jointly owned by sector members",cost:"Medium: €1,200/month",data:"Used only for routing, not commercially",governance:"Consortium board votes by majority"},
+  {ownership:"Private: owned by a major carrier or tech company",cost:"Medium: €1,200/month",data:"Your data is legally ring-fenced: used only for routing",governance:"Consortium board votes by majority"},
+  {ownership:"EU data intermediary: neutral non-profit body",cost:"High: €4,000/month",data:"Owner may use your data for its own commercial purposes",governance:"Owner sets all platform rules unilaterally"},
+  {ownership:"Industry consortium: jointly owned by sector members",cost:"Low: €250/month",data:"Your data is legally ring-fenced: used only for routing",governance:"Overseen by an independent EU regulator"},
 ];
 const CHOICE_OPTS = ["Yes, definitely","Probably yes","Unsure","Probably not","No, definitely not"];
 const LIKERT_LABELS = ["Strongly disagree","Disagree","Neutral","Agree","Strongly agree"];
@@ -2044,9 +2070,18 @@ const Survey = ({ onNav }) => {
               <div style={{ marginTop:14 }}>
                 {SURVEY_QS.filter(q=>q.block===block).map((q,qi,arr) => (
                   <div key={q.id} style={{ marginBottom:qi<arr.length-1?18:0 }}>
-                    <div style={{ fontSize:12, color:C.navy, lineHeight:1.55, marginBottom:8, fontWeight:500 }}>{q.q}</div>
-                    <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
-                      {LIKERT_LABELS.map((l,i) => <SBtn key={i} val={i+1} current={likert[q.id]} onSet={v=>setLikert(p=>({...p,[q.id]:v}))} color={blockColors[block]} />)}
+                    <div style={{ fontSize:12, color:C.navy, lineHeight:1.55, marginBottom:8, fontWeight:500 }}>
+                      {q.q}{q.tip && <Tooltip text={q.tip} />}
+                    </div>
+                    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                      {LIKERT_LABELS.map((l,i) => (
+                        <button key={i} onClick={()=>setLikert(p=>({...p,[q.id]:i+1}))}
+                          style={{ padding:"6px 12px", borderRadius:4, fontSize:11, cursor:"pointer",
+                            border:`1px solid ${likert[q.id]===i+1?blockColors[block]:C.border}`,
+                            background:likert[q.id]===i+1?blockColors[block]+"18":C.bg3,
+                            color:likert[q.id]===i+1?blockColors[block]:C.muted,
+                            fontWeight:likert[q.id]===i+1?700:400, fontFamily:"inherit" }}>{l}</button>
+                      ))}
                     </div>
                     {qi<arr.length-1 && <Rule />}
                   </div>
@@ -2060,19 +2095,27 @@ const Survey = ({ onNav }) => {
       {step===2 && (
         <div>
           <Card style={{ marginBottom:14, background:C.bg3 }}>
-            <div style={{ fontSize:12, color:C.muted, lineHeight:1.6 }}>For each scenario, would your organisation participate in this PI routing platform under these conditions?</div>
+            <div style={{ fontSize:12, color:C.muted, lineHeight:1.6 }}>For each scenario below, decide whether your organisation would participate in a PI routing platform under those conditions. There are no right or wrong answers: we are interested in your genuine preference.</div>
           </Card>
           {CHOICE_SCENARIOS.map((s,i) => (
             <Card key={i} style={{ marginBottom:12 }}>
               <div style={{ fontSize:11, fontWeight:700, color:C.dim, marginBottom:10 }}>Scenario {i+1} of {CHOICE_SCENARIOS.length}</div>
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }} className="grid-2">
-                {[["Ownership",s.ownership],["Monthly cost",s.cost],["Data use policy",s.data],["Governance",s.governance]].map(([k,v]) => (
+                {[
+                  ["Ownership",s.ownership,"Who owns and controls the platform."],
+                  ["Monthly cost",s.cost,"Estimated access cost per organisation per month."],
+                  ["Data use policy",s.data,"What the platform operator is allowed to do with your logistics data."],
+                  ["Governance",s.governance,"Who makes the rules and resolves disputes on the platform."]
+                ].map(([k,v,tip]) => (
                   <div key={k} style={{ background:C.bg3, borderRadius:5, padding:"8px 10px", border:`1px solid ${C.border}` }}>
-                    <div style={{ fontSize:9, color:C.dim, textTransform:"uppercase", letterSpacing:".1em", marginBottom:3 }}>{k}</div>
+                    <div style={{ fontSize:9, color:C.dim, textTransform:"uppercase", letterSpacing:".1em", marginBottom:3 }}>
+                      {k}<Tooltip text={tip} />
+                    </div>
                     <div style={{ fontSize:11, color:C.navy, fontWeight:500 }}>{v}</div>
                   </div>
                 ))}
               </div>
+              <div style={{ fontSize:11, color:C.muted, marginBottom:8 }}>Would your organisation participate in this PI platform under these conditions?</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                 {CHOICE_OPTS.map(o => <SBtn key={o} val={o} current={choices[i]} onSet={v=>setChoices(p=>({...p,[i]:v}))} color={C.purple} />)}
               </div>
