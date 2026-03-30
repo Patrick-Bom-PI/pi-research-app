@@ -1407,14 +1407,13 @@ const Tooltip = ({ text }) => {
           border:`1px solid ${C.blue}44`, color:C.blue, fontSize:10, fontWeight:700,
           cursor:"pointer", userSelect:"none", lineHeight:1 }}>?</span>
       {show && (
-        <span style={{ position:"absolute", left:"50%", bottom:"calc(100% + 6px)",
-          transform:"translateX(-50%)", background:C.navy, color:"#fff",
-          fontSize:11, lineHeight:1.5, padding:"8px 12px", borderRadius:6,
-          width:260, zIndex:100, boxShadow:"0 4px 16px rgba(0,0,0,0.18)",
+        <span style={{ position:"fixed", top:"50%", left:"50%",
+          transform:"translate(-50%,-50%)",
+          background:C.navy, color:"#fff",
+          fontSize:12, lineHeight:1.55, padding:"12px 16px", borderRadius:8,
+          width:"min(300px, 88vw)", zIndex:1000,
+          boxShadow:"0 8px 32px rgba(0,0,0,0.28)",
           pointerEvents:"none", display:"block" }}>{text}
-          <span style={{ position:"absolute", left:"50%", top:"100%", transform:"translateX(-50%)",
-            width:0, height:0, borderLeft:"6px solid transparent",
-            borderRight:"6px solid transparent", borderTop:`6px solid ${C.navy}` }} />
         </span>
       )}
     </span>
@@ -2080,7 +2079,9 @@ const Survey = ({ onNav }) => {
                             border:`1px solid ${likert[q.id]===i+1?blockColors[block]:C.border}`,
                             background:likert[q.id]===i+1?blockColors[block]+"18":C.bg3,
                             color:likert[q.id]===i+1?blockColors[block]:C.muted,
-                            fontWeight:likert[q.id]===i+1?700:400, fontFamily:"inherit" }}>{l}</button>
+                            fontWeight:likert[q.id]===i+1?700:400, fontFamily:"inherit" }}>
+                          <span style={{ fontWeight:700, marginRight:4 }}>{i+1}</span>{l}
+                        </button>
                       ))}
                     </div>
                     {qi<arr.length-1 && <Rule />}
